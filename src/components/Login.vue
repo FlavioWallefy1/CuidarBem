@@ -51,12 +51,14 @@ const handleLogin = () => {
     </div>
   </transition>
 
-  <main class="w-screen h-screen bg-black text-white p-6 flex flex-col items-center justify-between overflow-hidden border-[10px] border-[#1a1a1a] select-none box-border">
+  <!-- Removida a borda cinza (border-[10px]) e ajustado o padding para 4 para dar respiro lateral nas pontas -->
+  <main class="w-screen h-screen bg-black text-white p-4 sm:p-6 flex flex-col items-center justify-between overflow-hidden select-none box-border">
     
-    <header class="w-full flex items-center gap-6 h-[15%] animate-slide-in-top">
-      <div class="text-6xl animate-float shrink-0">🤖</div>
-      <div class="bg-zinc-900/50 backdrop-blur-md border-l-8 border-[#00c3ff] p-4 rounded-[25px] shadow-xl flex-1 overflow-hidden">
-        <p class="text-[#00c3ff] font-[1000] text-[2.2vw] uppercase italic leading-none whitespace-nowrap tracking-tighter">
+    <!-- Header com espaço inteligente no topo para não encostar nos botões do App.vue -->
+    <header class="w-full flex items-center gap-4 sm:gap-6 pt-10 sm:pt-0 h-[15%] animate-slide-in-top">
+      <div class="text-5xl sm:text-6xl animate-float shrink-0">🤖</div>
+      <div class="bg-zinc-900/50 backdrop-blur-md border-l-8 border-[#00c3ff] p-3 sm:p-4 rounded-[25px] shadow-xl w-fit">
+        <p class="text-[#00c3ff] font-[1000] text-[2.5vw] sm:text-[2.2vw] uppercase italic leading-none whitespace-nowrap tracking-tighter">
           TOQUE NO BOTÃO AMARELO PARA ENTRAR
         </p>
       </div>
@@ -73,17 +75,18 @@ const handleLogin = () => {
       </h1>
     </section>
 
-    <footer class="w-full flex flex-row gap-6 mb-2 h-32 shrink-0">
-      <button class="flex-1 bg-white text-black rounded-[35px] font-[1000] text-2xl uppercase transition-all duration-300 flex items-center justify-center gap-4 hover:scale-105 active:scale-95 shadow-[10px_10px_0px_0px_rgba(255,255,255,0.1)] border-4 border-zinc-200">
-        <img :src="googleImg" class="w-9 h-9 icon-black" alt="Google">
+    <!-- Rodapé ajustado com flex-1 e gap adequado para os textos encaixarem perfeitamente sem comer nas bordas -->
+    <footer class="w-full flex flex-row gap-4 sm:gap-6 mb-2 h-28 sm:h-32 shrink-0">
+      <button class="flex-1 bg-white text-black rounded-[30px] sm:rounded-[35px] font-[1000] text-xl sm:text-2xl uppercase transition-all duration-300 flex items-center justify-center gap-3 px-2 hover:scale-105 active:scale-95 shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)] border-4 border-zinc-200">
+        <img :src="googleImg" class="w-8 h-8 sm:w-9 sm:h-9 icon-black" alt="Google">
         GOOGLE
       </button>
 
       <button 
         @click="handleLogin"
-        class="flex-1 bg-[#ffff00] text-black rounded-[35px] font-[1000] text-4xl uppercase shadow-[10px_10px_0px_0px_rgba(255,255,0,0.2)] transition-all duration-300 flex items-center justify-center gap-5 hover:scale-105 active:scale-95 animate-btn-glow border-4 border-black"
+        class="flex-1 bg-[#ffff00] text-black rounded-[30px] sm:rounded-[35px] font-[1000] text-2xl sm:text-4xl uppercase shadow-[8px_8px_0px_0px_rgba(255,255,0,0.2)] transition-all duration-300 flex items-center justify-center gap-3 px-2 hover:scale-105 active:scale-95 animate-btn-glow border-4 border-black"
       >
-        <img :src="bioImg" class="w-14 h-14 icon-black" alt="Digital">
+        <img :src="bioImg" class="w-11 h-11 sm:w-14 sm:h-14 icon-black" alt="Digital">
         ENTRAR
       </button>
     </footer>

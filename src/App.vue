@@ -23,6 +23,10 @@ const diminuirZoom = () => {
 }
 
 const zoomStyle = computed(() => {
+  // Em telas menores que 768px (celulares), desativa o scale fixo para permitir responsividade nativa
+  if (window.innerWidth < 768) {
+    return { transform: 'none', width: '100vw', height: '100vh' }
+  }
   return {
     transform: `scale(${zoomLevel.value})`,
     transformOrigin: zoomLevel.value >= 1 ? 'top left' : 'center center',
@@ -32,8 +36,8 @@ const zoomStyle = computed(() => {
 </script>
 
 <template>
-  <div class="fixed top-8 right-8 z-[9999] flex flex-row gap-4">
-    
+  <!-- Contêiner responsivo para os botões de acessibilidade -->
+  <div class="fixed top-3 right-3 sm:top-6 sm:right-6 z-[9999] flex flex-row gap-2 sm:gap-4">
     <button 
       @click="aumentarZoom"
       @mouseenter="falarGuia('Aumentar tamanho da tela')"
@@ -49,7 +53,6 @@ const zoomStyle = computed(() => {
     >
       -
     </button>
-
   </div>
 
   <div class="zoom-viewport bg-black">
@@ -69,20 +72,30 @@ body, html {
   overflow: hidden;
 }
 
-/* Estilização dos Círculos */
+/* Estilização Responsiva dos Círculos */
 .btn-circulo {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 70px;
-  height: 70px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   font-weight: 900;
-  font-size: 50px;
-  border: 5px solid black;
+  font-size: 24px;
+  border: 3px solid black;
   cursor: pointer;
   transition: transform 0.2s ease-in-out, filter 0.2s ease-in-out;
-  box-shadow: 6px 6px 0px 0px rgba(255,255,255,0.15);
+  box-shadow: 4px 4px 0px 0px rgba(255,255,255,0.15);
+}
+
+@media (min-width: 640px) {
+  .btn-circulo {
+    width: 70px;
+    height: 70px;
+    font-size: 50px;
+    border: 5px solid black;
+    box-shadow: 6px 6px 0px 0px rgba(255,255,255,0.15);
+  }
 }
 
 .btn-circulo:hover {
@@ -112,7 +125,7 @@ body, html {
   display: flex;
   align-items: center; 
   justify-content: center; 
-  overflow: auto;
+  overflow: hidden;
 }
 
 .zoom-wrapper {
