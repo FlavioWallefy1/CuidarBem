@@ -71,10 +71,6 @@ const ajustarHora = (valor) => {
   hora.value = (hora.value + valor + 24) % 24
 }
 
-const ajustarMinuto = (valor) => {
-  minutos.value = (minutos.value + valor + 60) % 60
-}
-
 const salvarRemedio = async () => {
   if (!nomeRemedio.value) {
     falar("Por favor, digite o nome do remédio antes de salvar.")
@@ -110,96 +106,188 @@ const salvarRemedio = async () => {
 </script>
 
 <template>
-  <main class="w-screen h-screen bg-black text-white flex p-4 overflow-hidden select-none font-sans box-border">
-    
-    <aside class="w-[280px] h-full flex flex-col p-6 bg-[#0a0a0a] rounded-[40px] border-4 border-zinc-800 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] mr-6 shrink-0 relative overflow-hidden">
-      
-      <div class="flex flex-col gap-2 mb-8 relative z-10">
-        <div class="flex items-center gap-3">
-          <div class="bg-[#ffff00] p-2 rounded-xl rotate-3">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-black" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-            </svg>
-          </div>
-          <h1 class="text-[#ffff00] text-2xl font-[1000] italic leading-none uppercase">CUIDAR<br>BEM</h1>
-        </div>
-        <div class="h-1 bg-zinc-800 mt-4 rounded-full overflow-hidden">
-          <div class="h-full bg-[#ffff00] w-2/3 animate-loading-bar"></div>
-        </div>
-      </div>
+  <main class="w-screen h-[100dvh] bg-black text-white flex flex-col md:flex-row p-3 md:p-6 overflow-hidden select-none font-sans box-border relative gap-4">
 
-      <nav class="flex flex-col gap-6 flex-grow relative z-10">
-        <button @click="router.push('/dashboard')" @mouseenter="falar('Ir para o início')" class="group flex items-center gap-4 py-2 text-white font-black text-3xl uppercase transition-all hover:text-[#ffff00] text-left pl-4">
-          INÍCIO
-        </button>
-        <button @click="router.push('/remedios')" @mouseenter="falar('Ver meus remédios')" class="group flex items-center gap-4 py-2 text-white font-black text-3xl uppercase transition-all hover:text-[#ffff00] text-left pl-4">
-          REMÉDIOS
-        </button>
-        <button class="w-full" @mouseenter="falar(idEdicao ? 'Você está alterando um remédio' : 'Você está cadastrando um novo remédio')">
-          <div class="bg-[#ffff00] text-black py-5 rounded-[30px] font-[1000] text-3xl uppercase shadow-[6px_6px_0px_0px_rgba(255,255,255,0.1)]">
-            {{ idEdicao ? 'ALTERAR' : 'AGENDAR' }}
-          </div>
-        </button>
-        <button @click="router.push('/')" @mouseenter="falar('Sair do sistema')" class="mt-auto py-6 text-[#FF0000] font-[1000] text-4xl uppercase border-t-2 border-zinc-900 pt-6 text-left drop-shadow-[0_0_15px_rgba(255,0,0,0.4)]">
-          SAIR
-        </button>
-      </nav>
-    </aside>
-
-    <section class="flex-1 h-full flex flex-col gap-4 overflow-hidden">
+    <!-- ========================================================= -->
+    <!-- VERSÃO MOBILE (Visível apenas em celulares)                 -->
+    <!-- ========================================================= -->
+    <div class="flex md:hidden flex-col h-full w-full gap-3 overflow-hidden">
       
-      <div class="flex items-center gap-6 h-[15%] shrink-0">
-        <div class="text-7xl animate-float shrink-0">🤖</div>
-        <div class="bg-zinc-900/50 backdrop-blur-md border-l-8 border-[#00c3ff] p-5 rounded-[30px] shadow-xl flex-1 overflow-hidden">
-          <p class="text-[#00c3ff] font-[1000] text-[2.2vw] uppercase italic leading-none whitespace-nowrap tracking-tighter">
+      <!-- 1. Robô no Topo -->
+      <div class="flex items-center gap-3 shrink-0 pt-2">
+        <div class="text-3xl animate-float shrink-0">🤖</div>
+        <div class="bg-zinc-900/50 backdrop-blur-md border-l-8 border-[#00c3ff] px-3 py-2 rounded-[18px] shadow-xl flex-1 overflow-hidden">
+          <p class="text-[#00c3ff] font-[1000] text-xs uppercase italic leading-tight truncate">
             {{ idEdicao ? 'VAMOS ALTERAR SEU REMÉDIO!' : 'VAMOS CADASTRAR UM NOVO REMÉDIO!' }}
           </p>
         </div>
       </div>
 
-      <div class="flex-grow flex flex-col gap-6 overflow-y-auto pr-2 scroll-personalizado pb-10">
-        
+      <!-- 2. Sidebar Padrão idêntica à tela de remédios (com o botão ativo no meio) -->
+      <aside class="w-full flex flex-col p-4 bg-[#0a0a0a] rounded-[30px] border-4 border-zinc-800 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] shrink-0">
+        <div class="flex items-center justify-between mb-3 relative z-10">
+          <div class="flex items-center gap-2">
+            <div class="bg-[#ffff00] p-1.5 rounded-lg rotate-3">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-black" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              </svg>
+            </div>
+            <h1 class="text-[#ffff00] text-xs font-[1000] italic leading-none uppercase">CUIDAR BEM</h1>
+          </div>
+          <div class="h-1 bg-zinc-800 w-24 rounded-full overflow-hidden">
+            <div class="h-full bg-[#ffff00] w-2/3 animate-loading-bar"></div>
+          </div>
+        </div>
+
+        <nav class="flex flex-row items-center justify-between relative z-10 px-1">
+          <button @click="router.push('/dashboard')" @mouseenter="falar('Ir para o início')" class="text-white font-black text-base uppercase transition-all hover:text-[#ffff00]">INÍCIO</button>
+          
+          <!-- Botão Central em Destaque Amarelo (Agendar/Cadastrar) -->
+          <button class="text-black bg-[#ffff00] py-2 px-4 rounded-[15px] font-[1000] text-base uppercase shadow-[3px_3px_0px_0px_rgba(255,255,255,0.1)]" @mouseenter="falar(idEdicao ? 'Você está alterando um remédio' : 'Você está cadastrando um novo remédio')">
+            {{ idEdicao ? 'ALTERAR' : 'AGENDAR' }}
+          </button>
+          
+          <button @click="router.push('/')" @mouseenter="falar('Sair do sistema')" class="text-[#FF0000] font-[1000] text-base uppercase drop-shadow-[0_0_8px_rgba(255,0,0,0.4)]">SAIR</button>
+        </nav>
+      </aside>
+
+      <!-- 3. Formulário em Baixo -->
+      <div class="flex-grow flex flex-col overflow-y-auto gap-4 pr-1 scroll-personalizado pb-6">
+
         <div 
-          class="bg-zinc-900 rounded-[40px] p-8 border-4 border-zinc-800 shadow-[15px_15px_0px_0px_rgba(255,255,0,0.05)]"
+          class="bg-zinc-900 rounded-[30px] p-5 border-3 border-zinc-800 shadow-[8px_8px_0px_0px_rgba(255,255,0,0.05)]"
           @mouseenter="falar('Toque no campo preto de borda amarela para digitar o nome do remédio', 'campo-nome')"
         >
-          <label class="text-white font-black text-3xl uppercase mb-4 block tracking-tight">QUAL O NOME DO REMÉDIO?</label>
-          <input v-model="nomeRemedio" type="text" placeholder="TOQUE AQUI PARA DIGITAR" class="w-full bg-black border-4 border-[#ffff00] rounded-[25px] p-6 text-white font-[1000] text-5xl uppercase focus:outline-none focus:shadow-[0_0_40px_rgba(255,255,0,0.3)] placeholder:text-[#ffff00]/30">
+          <label class="text-white font-black text-lg uppercase mb-2 block tracking-tight">QUAL O NOME DO REMÉDIO?</label>
+          <input v-model="nomeRemedio" type="text" placeholder="TOQUE AQUI" class="w-full bg-black border-3 border-[#ffff00] rounded-[20px] p-4 text-white font-[1000] text-2xl uppercase focus:outline-none focus:shadow-[0_0_20px_rgba(255,255,0,0.3)] placeholder:text-[#ffff00]/30">
         </div>
 
         <div 
-          class="bg-zinc-900 rounded-[40px] p-8 border-4 border-zinc-800 shadow-[15px_15px_0px_0px_rgba(255,255,0,0.05)] flex items-center justify-between"
-          @mouseenter="falar('Toque no número para digitar o horário ou use os botões ao lado', 'campo-hora')"
+          class="bg-zinc-900 rounded-[30px] p-5 border-3 border-zinc-800 shadow-[8px_8px_0px_0px_rgba(255,255,0,0.05)] flex items-center justify-between"
+          @mouseenter="falar('Toque no horário para alterar ou use os botões ao lado', 'campo-hora')"
         >
-          <div class="flex flex-col gap-2">
-            <label class="text-white font-black text-3xl uppercase tracking-tight">QUE HORAS TOMAR?</label>
-            <div class="flex items-center">
-              <input 
-                type="time" 
-                v-model="horarioInput"
-                class="bg-transparent text-[#ffff00] font-[1000] text-9xl tracking-tighter drop-shadow-[0_0_20px_rgba(255,255,0,0.3)] border-none outline-none cursor-pointer"
-                style="color-scheme: dark;"
-              >
-            </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-white font-black text-lg uppercase tracking-tight">QUE HORAS?</label>
+            <input 
+              type="time" 
+              v-model="horarioInput"
+              class="bg-transparent text-[#ffff00] font-[1000] text-6xl tracking-tighter drop-shadow-[0_0_15px_rgba(255,255,0,0.3)] border-none outline-none cursor-pointer w-full"
+              style="color-scheme: dark;"
+            >
           </div>
-          <div class="flex gap-4">
-            <div class="flex flex-col gap-4">
-              <button @click="ajustarHora(1)" class="w-24 h-24 bg-[#ffff00] text-black rounded-3xl font-black text-6xl shadow-lg active:scale-90">+</button>
-              <button @click="ajustarHora(-1)" class="w-24 h-24 bg-zinc-800 text-white rounded-3xl font-black text-6xl shadow-lg active:scale-90">-</button>
-            </div>
+          <div class="flex flex-col gap-2">
+            <button @click="ajustarHora(1)" class="w-14 h-14 bg-[#ffff00] text-black rounded-2xl font-black text-3xl shadow-md active:scale-90 flex items-center justify-center">+</button>
+            <button @click="ajustarHora(-1)" class="w-14 h-14 bg-zinc-800 text-white rounded-2xl font-black text-3xl shadow-md active:scale-90 flex items-center justify-center">-</button>
           </div>
         </div>
 
         <button 
           @click="salvarRemedio"
           @mouseenter="falar('Toque aqui para salvar o agendamento', 'botao-salvar')"
-          class="w-full bg-[#00ff00] text-black py-10 rounded-[45px] font-[1000] text-6xl uppercase shadow-[15px_15px_0px_0px_rgba(0,255,0,0.2)] border-8 border-black hover:scale-[1.02] active:scale-95 transition-all mt-4"
+          class="w-full bg-[#00ff00] text-black py-5 rounded-[30px] font-[1000] text-xl uppercase shadow-[8px_8px_0px_0px_rgba(0,255,0,0.2)] border-4 border-black active:scale-95 transition-all mt-2"
         >
           {{ idEdicao ? 'SALVAR ALTERAÇÕES ✅' : 'SALVAR AGENDAMENTO ✅' }}
         </button>
 
       </div>
-    </section>
+    </div>
+
+
+    <!-- ========================================================= -->
+    <!-- VERSÃO DESKTOP / NOTEBOOK / TOTEM (Telas Grandes)           -->
+    <!-- ========================================================= -->
+    <div class="hidden md:flex h-full w-full flex-row">
+
+      <aside class="w-[280px] h-full flex flex-col p-6 bg-[#0a0a0a] rounded-[40px] border-4 border-zinc-800 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] mr-6 shrink-0 relative overflow-hidden">
+
+        <div class="flex flex-col gap-2 mb-8 relative z-10">
+          <div class="flex items-center gap-3">
+            <div class="bg-[#ffff00] p-2 rounded-xl rotate-3">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-black" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              </svg>
+            </div>
+            <h1 class="text-[#ffff00] text-2xl font-[1000] italic leading-none uppercase">CUIDAR<br>BEM</h1>
+          </div>
+          <div class="h-1 bg-zinc-800 mt-4 rounded-full overflow-hidden">
+            <div class="h-full bg-[#ffff00] w-2/3 animate-loading-bar"></div>
+          </div>
+        </div>
+
+        <nav class="flex flex-col gap-6 flex-grow relative z-10">
+          <button @click="router.push('/dashboard')" @mouseenter="falar('Ir para o início')" class="group flex items-center gap-4 py-2 text-white font-black text-3xl uppercase transition-all hover:text-[#ffff00] text-left pl-4">
+            INÍCIO
+          </button>
+          <button @click="router.push('/remedios')" @mouseenter="falar('Ver meus remédios')" class="group flex items-center gap-4 py-2 text-white font-black text-3xl uppercase transition-all hover:text-[#ffff00] text-left pl-4">
+            REMÉDIOS
+          </button>
+          <button class="w-full text-left" @mouseenter="falar(idEdicao ? 'Você está alterando um remédio' : 'Você está cadastrando um novo remédio')">
+            <div class="bg-[#ffff00] text-black py-5 px-4 rounded-[30px] font-[1000] text-3xl uppercase shadow-[6px_6px_0px_0px_rgba(255,255,255,0.1)] inline-block w-full text-center">
+              {{ idEdicao ? 'ALTERAR' : 'AGENDAR' }}
+            </div>
+          </button>
+          <button @click="router.push('/')" @mouseenter="falar('Sair do sistema')" class="mt-auto py-6 text-[#FF0000] font-[1000] text-4xl uppercase border-t-2 border-zinc-900 pt-6 text-left drop-shadow-[0_0_15px_rgba(255,0,0,0.4)]">
+            SAIR
+          </button>
+        </nav>
+      </aside>
+
+      <section class="flex-1 h-full flex flex-col gap-4 overflow-hidden">
+
+        <div class="flex items-center gap-6 h-[18%] shrink-0">
+          <div class="text-7xl animate-float shrink-0">🤖</div>
+          <div class="bg-zinc-900/50 backdrop-blur-md border-l-8 border-[#00c3ff] p-5 rounded-[30px] shadow-xl flex-1 overflow-hidden">
+            <p class="text-[#00c3ff] font-[1000] text-[2.2vw] uppercase italic leading-none whitespace-nowrap tracking-tighter">
+              {{ idEdicao ? 'VAMOS ALTERAR SEU REMÉDIO!' : 'VAMOS CADASTRAR UM NOVO REMÉDIO!' }}
+            </p>
+          </div>
+        </div>
+
+        <div class="flex-grow flex flex-col gap-6 overflow-y-auto pr-2 scroll-personalizado pb-10">
+
+          <div 
+            class="bg-zinc-900 rounded-[40px] p-8 border-4 border-zinc-800 shadow-[15px_15px_0px_0px_rgba(255,255,0,0.05)]"
+            @mouseenter="falar('Toque no campo preto de borda amarela para digitar o nome do remédio', 'campo-nome')"
+          >
+            <label class="text-white font-black text-3xl uppercase mb-4 block tracking-tight">QUAL O NOME DO REMÉDIO?</label>
+            <input v-model="nomeRemedio" type="text" placeholder="TOQUE AQUI PARA DIGITAR" class="w-full bg-black border-4 border-[#ffff00] rounded-[25px] p-6 text-white font-[1000] text-5xl uppercase focus:outline-none focus:shadow-[0_0_40px_rgba(255,255,0,0.3)] placeholder:text-[#ffff00]/30">
+          </div>
+
+          <div 
+            class="bg-zinc-900 rounded-[40px] p-8 border-4 border-zinc-800 shadow-[15px_15px_0px_0px_rgba(255,255,0,0.05)] flex items-center justify-between"
+            @mouseenter="falar('Toque no número para digitar o horário ou use os botões ao lado', 'campo-hora')"
+          >
+            <div class="flex flex-col gap-2">
+              <label class="text-white font-black text-3xl uppercase tracking-tight">QUE HORAS TOMAR?</label>
+              <div class="flex items-center">
+                <input 
+                  type="time" 
+                  v-model="horarioInput"
+                  class="bg-transparent text-[#ffff00] font-[1000] text-9xl tracking-tighter drop-shadow-[0_0_20px_rgba(255,255,0,0.3)] border-none outline-none cursor-pointer"
+                  style="color-scheme: dark;"
+                >
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="flex flex-col gap-4">
+                <button @click="ajustarHora(1)" class="w-24 h-24 bg-[#ffff00] text-black rounded-3xl font-black text-6xl shadow-lg active:scale-90">+</button>
+                <button @click="ajustarHora(-1)" class="w-24 h-24 bg-zinc-800 text-white rounded-3xl font-black text-6xl shadow-lg active:scale-90">-</button>
+              </div>
+            </div>
+          </div>
+
+          <button 
+            @click="salvarRemedio"
+            @mouseenter="falar('Toque aqui para salvar o agendamento', 'botao-salvar')"
+            class="w-full bg-[#00ff00] text-black py-10 rounded-[45px] font-[1000] text-6xl uppercase shadow-[15px_15px_0px_0px_rgba(0,255,0,0.2)] border-8 border-black hover:scale-[1.02] active:scale-95 transition-all mt-4"
+          >
+            {{ idEdicao ? 'SALVAR ALTERAÇÕES ✅' : 'SALVAR AGENDAMENTO ✅' }}
+          </button>
+
+        </div>
+      </section>
+    </div>
+
   </main>
 </template>
 
