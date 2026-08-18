@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../components/Login.vue'
-import Dashborad from '../components/Dashborad.vue'
+import Dashboard from '../components/Dashboard.vue'
 import Remedios from '../components/Remedios.vue'
 import Alarme from '../components/Alarme.vue'
 import CadastrarRemedio from '../components/CadastrarRemedio.vue'
