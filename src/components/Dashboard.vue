@@ -6,22 +6,39 @@ import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestor
 
 const router = useRouter()
 const remedios = ref([])
+const dadosCarregados = ref(false)
 let unsubscribe = null
 let intervaloVigia = null 
 
+let filaVoz = []
+let processandoFila = false
 const jaFalouConteudo = ref('')
 
-const falar = (texto, repetir = true) => {
-  if ('speechSynthesis' in window) {
-    if (!repetir && jaFalouConteudo.value === texto) return;
+const processarFilaVoz = () => {
+  if (filaVoz.length === 0 || !('speechSynthesis' in window)) {
+    processandoFila = false
+    return
+  }
+  processandoFila = true
+  const textoAtual = filaVoz.shift()
+  const utterance = new SpeechSynthesisUtterance(textoAtual)
+  utterance.lang = 'pt-BR'
+  utterance.rate = 0.8 
+  utterance.onend = () => { setTimeout(() => processarFilaVoz(), 100) }
+  utterance.onerror = () => { processarFilaVoz() }
+  window.speechSynthesis.speak(utterance)
+}
 
-    window.speechSynthesis.cancel()
-    const utterance = new SpeechSynthesisUtterance(texto)
-    utterance.lang = 'pt-BR'
-    utterance.rate = 0.8 
-    window.speechSynthesis.speak(utterance)
-  
-    if (!repetir) jaFalouConteudo.value = texto
+const falar = (texto, repetir = true) => {
+  if (!('speechSynthesis' in window)) return
+  if (!repetir && jaFalouConteudo.value === texto) return
+  if (!repetir) jaFalouConteudo.value = texto
+
+  if (filaVoz[filaVoz.length - 1] === texto) return
+  filaVoz.push(texto)
+
+  if (!processandoFila && !window.speechSynthesis.speaking) {
+    processarFilaVoz()
   }
 }
 
@@ -54,6 +71,7 @@ onMounted(() => {
       docs.push({ id: doc.id, ...doc.data() })
     })
     remedios.value = docs
+    dadosCarregados.value = true
   })
 
   intervaloVigia = setInterval(vigiarHorario, 10000)
@@ -62,19 +80,16 @@ onMounted(() => {
 onUnmounted(() => {
   if (unsubscribe) unsubscribe()
   if (intervaloVigia) clearInterval(intervaloVigia)
-  window.speechSynthesis.cancel()
+  filaVoz = []
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel()
 })
 </script>
 
 <template>
   <main class="w-screen h-[100dvh] bg-black text-white flex flex-col md:flex-row p-3 md:p-6 overflow-hidden select-none font-sans box-border relative gap-4">
     
-    <!-- ========================================================= -->
-    <!-- VERSÃO MOBILE (Visível apenas em celulares)                 -->
-    <!-- ========================================================= -->
+    <!-- VERSÃO MOBILE -->
     <div class="flex md:hidden flex-col h-full w-full gap-3 overflow-hidden">
-      
-      <!-- 1. Robô no Topo -->
       <div class="flex items-center gap-3 shrink-0 pt-2">
         <div class="text-3xl animate-float shrink-0">🤖</div>
         <div class="bg-zinc-900/50 backdrop-blur-md border-l-8 border-[#00c3ff] px-3 py-2 rounded-[18px] shadow-xl flex-1 overflow-hidden">
@@ -84,7 +99,6 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- 2. Sidebar Padrão Compacta com Itens na HORIZONTAL -->
       <aside class="w-full flex flex-col p-4 bg-[#0a0a0a] rounded-[30px] border-4 border-zinc-800 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] shrink-0">
         <div class="flex items-center justify-between mb-3 relative z-10">
           <div class="flex items-center gap-2">
@@ -101,39 +115,31 @@ onUnmounted(() => {
         </div>
 
         <nav class="flex flex-row items-center justify-between relative z-10 px-1">
-          <!-- Botão Central em Destaque Amarelo (Início) -->
           <button class="text-black bg-[#ffff00] py-2 px-4 rounded-[15px] font-[1000] text-base uppercase shadow-[3px_3px_0px_0px_rgba(255,255,255,0.1)]" @mouseenter="falar('Menu Início')">INÍCIO</button>
-          
           <button @click="router.push('/remedios')" @mouseenter="falar('Remédios')" class="text-white font-black text-base uppercase transition-all hover:text-[#ffff00]">REMÉDIOS</button>
-          
           <button @click="router.push('/')" @mouseenter="falar('Sair do sistema')" class="text-[#FF0000] font-[1000] text-base uppercase drop-shadow-[0_0_8px_rgba(255,0,0,0.4)]">SAIR</button>
         </nav>
       </aside>
 
-      <!-- 3. Card Base Original com Fontes Máximas para Celular -->
       <div class="flex-grow flex flex-col overflow-hidden pb-2">
         <div v-if="proximoRemedio" 
-             @mouseenter="falar(`Próximo remédio é ${proximoRemedio.nome} às ${proximoRemedio.horario}`, false)"
+             @mouseenter="dadosCarregados && falar(`Próximo remédio é ${proximoRemedio.nome} às ${proximoRemedio.horario}`, false)"
              class="h-full bg-[#ffff00] rounded-[35px] p-1.5 shadow-[12px_12px_0px_0px_rgba(255,255,0,0.1)] overflow-hidden">
           <div class="h-full w-full bg-black rounded-[32px] border-[4px] border-black p-4 flex flex-col justify-around items-center relative overflow-hidden">
-            
             <div class="relative z-10 flex flex-col items-center flex-1 justify-center">
                <div class="px-6 py-2 bg-[#ffff00] text-black rounded-full font-[1000] text-base uppercase tracking-widest mb-1 shadow-md">
                  PRÓXIMO ÀS {{ proximoRemedio.horario }}
                </div>
-               <!-- Horário hiper-enorme (26vw) -->
                <span class="text-white font-[1000] text-[26vw] leading-none tracking-tighter shadow-black drop-shadow-2xl">
                  {{ proximoRemedio.horario }}
                </span>
             </div>
 
             <div class="relative z-10 border-t-8 border-[#ffff00]/20 pt-2 flex flex-col items-center flex-1 justify-center w-[90%]">
-              <!-- Nome do remédio hiper-enorme (13vw) -->
               <h2 class="text-[#ffff00] font-[1000] text-[13vw] uppercase tracking-tighter leading-none mb-3 text-center drop-shadow-lg">
                 {{ proximoRemedio.nome }}
               </h2>
               <div class="flex gap-3 justify-center">
-                <!-- Posologia em uma linha e maior (text-base) -->
                 <span class="bg-white text-black px-5 py-2.5 rounded-xl font-[1000] text-base uppercase italic shadow-md whitespace-nowrap">1 COMPRIMIDO</span>
                 <span class="bg-white text-black px-5 py-2.5 rounded-xl font-[1000] text-base uppercase italic shadow-md whitespace-nowrap">VIA ORAL</span>
               </div>
@@ -141,7 +147,7 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <div v-else 
+        <div v-else-if="dadosCarregados" 
              @mouseenter="falar('Nenhum remédio pendente! Tudo em dia!', false)"
              class="h-full bg-zinc-900 rounded-[35px] border-8 border-[#ffff00] flex flex-col items-center justify-center p-4 shadow-[0_0_40px_rgba(255,255,0,0.1)] overflow-hidden">
             <div class="relative w-20 h-32 mb-1 rotate-[35deg] animate-capsula-bounce shrink-0">
@@ -158,17 +164,11 @@ onUnmounted(() => {
             </div>
         </div>
       </div>
-
     </div>
 
-
-    <!-- ========================================================= -->
-    <!-- VERSÃO DESKTOP / NOTEBOOK / TOTEM (Telas Grandes)         -->
-    <!-- ========================================================= -->
+    <!-- VERSÃO DESKTOP -->
     <div class="hidden md:flex h-full w-full flex-row">
-      
       <aside class="w-[280px] h-full flex flex-col p-6 bg-[#0a0a0a] rounded-[40px] border-4 border-zinc-800 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] mr-6 relative shrink-0">
-        
         <div class="flex flex-col gap-2 mb-8 relative z-10">
           <div class="flex items-center gap-3">
             <div class="bg-[#ffff00] p-2 rounded-xl rotate-3">
@@ -185,24 +185,15 @@ onUnmounted(() => {
 
         <nav class="flex flex-col gap-6 flex-grow relative z-10">
           <button class="w-full" @mouseenter="falar('Menu Início')">
-            <div class="bg-[#ffff00] text-black py-5 rounded-[30px] font-[1000] text-3xl uppercase shadow-[6px_6px_0_0_rgba(255,255,255,0.1)] transition-all">
-              INÍCIO
-            </div>
+            <div class="bg-[#ffff00] text-black py-5 rounded-[30px] font-[1000] text-3xl uppercase shadow-[6px_6px_0_0_rgba(255,255,255,0.1)] transition-all">INÍCIO</div>
           </button>
-
-          <button @click="router.push('/remedios')" @mouseenter="falar('Remédios')" class="group flex items-center gap-4 py-2 text-white font-black text-3xl uppercase transition-all hover:text-[#ffff00] pl-4 text-left">
-            REMÉDIOS
-          </button>
-
-          <button @click="router.push('/')" @mouseenter="falar('Sair do sistema')" class="mt-auto py-6 text-[#FF0000] font-[1000] text-4xl uppercase border-t-2 border-zinc-900 pt-6 text-left drop-shadow-[0_0_15px_rgba(255,0,0,0.3)]">
-            SAIR
-          </button>
+          <button @click="router.push('/remedios')" @mouseenter="falar('Remédios')" class="group flex items-center gap-4 py-2 text-white font-black text-3xl uppercase transition-all hover:text-[#ffff00] pl-4 text-left">REMÉDIOS</button>
+          <button @click="router.push('/')" @mouseenter="falar('Sair do sistema')" class="mt-auto py-6 text-[#FF0000] font-[1000] text-4xl uppercase border-t-2 border-zinc-900 pt-6 text-left drop-shadow-[0_0_15px_rgba(255,0,0,0.3)]">SAIR</button>
         </nav>
       </aside>
 
       <section class="flex-1 h-full flex flex-col gap-4 overflow-hidden">
-        
-        <div class="flex items-center gap-6 h-[20%] animate-fade-in-up">
+        <div class="flex items-center gap-6 h-[20%] animate-fade-in-up shrink-0">
           <div class="text-7xl animate-float">🤖</div>
           <div class="bg-zinc-900/50 backdrop-blur-md border-l-8 border-[#00c3ff] p-6 rounded-[30px] shadow-xl flex-1">
             <p class="text-[#00c3ff] font-[1000] text-3xl uppercase italic leading-tight">
@@ -212,10 +203,9 @@ onUnmounted(() => {
         </div>
 
         <div v-if="proximoRemedio" 
-             @mouseenter="falar(`Próximo remédio é ${proximoRemedio.nome} às ${proximoRemedio.horario}`, false)"
+             @mouseenter="dadosCarregados && falar(`Próximo remédio é ${proximoRemedio.nome} às ${proximoRemedio.horario}`, false)"
              class="flex-grow bg-[#ffff00] rounded-[50px] p-1.5 shadow-[20px_20px_0px_0px_rgba(255,255,0,0.1)] overflow-hidden transition-all">
           <div class="h-full w-full bg-black rounded-[45px] border-[4px] border-black p-4 md:p-6 flex flex-col justify-around items-center relative overflow-hidden">
-            
             <div class="relative z-10 flex flex-col items-center flex-1 justify-center">
                <div class="px-6 py-2 bg-[#ffff00] text-black rounded-full font-[1000] text-2xl uppercase tracking-widest mb-1">
                  PRÓXIMO ÀS {{ proximoRemedio.horario }}
@@ -237,30 +227,25 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <div v-else 
+        <!-- Ajustado aqui com flex-grow e overflow oculto para não estourar a tela -->
+        <div v-else-if="dadosCarregados" 
              @mouseenter="falar('Nenhum remédio pendente! Tudo em dia!', false)"
-             class="flex-grow bg-zinc-900 rounded-[50px] border-8 border-[#ffff00] flex flex-col items-center justify-center p-8 shadow-[0_0_50px_rgba(255,255,0,0.1)] overflow-hidden">
-           
-          <div class="relative w-44 h-72 mb-2 rotate-[35deg] animate-capsula-bounce shrink-0">
+             class="flex-grow bg-zinc-900 rounded-[50px] border-8 border-[#ffff00] flex flex-col items-center justify-center p-6 shadow-[0_0_50px_rgba(255,255,0,0.1)] overflow-hidden">
+          <div class="relative w-36 h-56 mb-2 rotate-[35deg] animate-capsula-bounce shrink-0">
             <div class="w-full h-1/2 bg-[#FF0000] rounded-t-full border-[10px] border-black border-b-0"></div>
             <div class="w-[110%] h-6 bg-black absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full z-20"></div>
             <div class="w-full h-1/2 bg-[#ffff00] rounded-b-full border-[10px] border-black border-t-0 shadow-[inset_0_-20px_0_rgba(0,0,0,0.1)]"></div>
             <div class="absolute top-10 left-6 w-4 h-20 bg-white/30 rounded-full blur-[2px]"></div>
           </div>
-
-          <div class="text-center pb-20">
-            <h2 class="text-white font-[1000] text-[6vw] uppercase italic tracking-tighter leading-tight">
+          <div class="text-center">
+            <h2 class="text-white font-[1000] text-[5vw] uppercase italic tracking-tighter leading-tight">
               NENHUM REMÉDIO<br>
               <span class="text-[#ffff00] drop-shadow-[0_0_15px_rgba(255,255,0,0.3)]">PENDENTE!</span>
             </h2>
           </div>
-          
         </div>
-
       </section>
-
     </div>
-
   </main>
 </template>
 
