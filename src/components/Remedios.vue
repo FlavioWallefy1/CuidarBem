@@ -139,7 +139,7 @@ const fecharAjuda = () => {
 const solicitarExclusao = (remedio) => {
   remedioParaExcluir.value = remedio
   mostrarModalExclusao.value = true
-  falar(`Você clicou no botão para excluir o remédio ${remedio.nome}. Deseja realmente fazer isso? Se sim, aperte no botão de confirmação logo abaixo.`, null, true)
+  falar(`Você clicou no botão para excluir o remédio ${remedio.nome}. Deseja realmente fazer isso? Se sim, abaixo temos dois botões o vermelho é para confirmar e exclusão e o amarelo é para cancelar.`, null, true)
 }
 
 const cancelarExclusao = () => {
