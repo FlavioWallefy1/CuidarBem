@@ -40,17 +40,20 @@ const falar = (texto, idUnico = null, limparFila = false) => {
   if (!('speechSynthesis' in window)) return
   if (idUnico && idsFalados.value.has(idUnico)) return
 
+  // Converte para minúsculo para evitar que o sintetizador soletrar palavras em caixa alta
+  const textoParaFalar = texto ? texto.toLowerCase() : ''
+
   if (limparFila) {
     window.speechSynthesis.cancel()
-    filaVoz = [texto]
+    filaVoz = [textoParaFalar]
     processandoFila = false
     processarFilaVoz()
     if (idUnico) idsFalados.value.add(idUnico)
     return
   }
 
-  if (filaVoz[filaVoz.length - 1] === texto) return
-  filaVoz.push(texto)
+  if (filaVoz[filaVoz.length - 1] === textoParaFalar) return
+  filaVoz.push(textoParaFalar)
   if (idUnico) idsFalados.value.add(idUnico)
 
   if (!processandoFila && !window.speechSynthesis.speaking) {
@@ -133,11 +136,10 @@ const fecharAjuda = () => {
   }
 }
 
-// Funções para gerenciar o Modal de Exclusão Profissional
 const solicitarExclusao = (remedio) => {
   remedioParaExcluir.value = remedio
   mostrarModalExclusao.value = true
-  falar(`Você clicou no botão para excluir o remédio ${remedio.nome}. Deseja realmente fazer isso? Se sim, abaixo temos dois botões o vermelho é para confirmar e exclusão e o amarelo é para cancelar..`, null, true)
+  falar(`Você clicou no botão para excluir o remédio ${remedio.nome}. Deseja realmente fazer isso? Se sim, aperte no botão de confirmação logo abaixo.`, null, true)
 }
 
 const cancelarExclusao = () => {
@@ -150,7 +152,7 @@ const confirmarExclusaoEfetiva = async () => {
   if (remedioParaExcluir.value) {
     try {
       await deleteDoc(doc(db, 'remedios', remedioParaExcluir.value.id))
-      falar("Remédio removido", null, true)
+      falar("Remédio removido com sucesso!", null, true)
       mostrarModalExclusao.value = false
       remedioParaExcluir.value = null
     } catch (e) {
@@ -341,7 +343,7 @@ const confirmarTomado = async (remedio) => {
       </div>
     </Transition>
 
-    <!-- NOVO MODAL PERSONALIZADO DE EXCLUSÃO -->
+    <!-- MODAL PERSONALIZADO DE EXCLUSÃO -->
     <Transition name="fade">
       <div v-if="mostrarModalExclusao" class="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 md:p-8 backdrop-blur-md">
         <div class="max-w-4xl w-full bg-[#0a0a0a] border-6 md:border-8 border-[#FF0000] rounded-[40px] md:rounded-[60px] p-6 md:p-10 flex flex-col gap-6 shadow-[0_0_100px_rgba(255,0,0,0.3)] text-center">
