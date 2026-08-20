@@ -10,6 +10,11 @@ let unsubscribe = null
 
 const mostrarAjuda = ref(false)
 const infoAjuda = ref({ nome: '', texto: '' })
+
+// Controle do Modal Personalizado de Exclusão
+const mostrarModalExclusao = ref(false)
+const remedioParaExcluir = ref(null)
+
 const idsFalados = ref(new Set())
 const carregandoIA = ref(false)
 
@@ -128,6 +133,33 @@ const fecharAjuda = () => {
   }
 }
 
+// Funções para gerenciar o Modal de Exclusão Profissional
+const solicitarExclusao = (remedio) => {
+  remedioParaExcluir.value = remedio
+  mostrarModalExclusao.value = true
+  falar(`Você clicou no botão para excluir o remédio ${remedio.nome}. Deseja realmente fazer isso? Se sim, abaixo temos dois botões o vermelho é para confirmar e exclusão e o amarelo é para cancelar..`, null, true)
+}
+
+const cancelarExclusao = () => {
+  mostrarModalExclusao.value = false
+  remedioParaExcluir.value = null
+  falar("Exclusão cancelada.", null, true)
+}
+
+const confirmarExclusaoEfetiva = async () => {
+  if (remedioParaExcluir.value) {
+    try {
+      await deleteDoc(doc(db, 'remedios', remedioParaExcluir.value.id))
+      falar("Remédio removido", null, true)
+      mostrarModalExclusao.value = false
+      remedioParaExcluir.value = null
+    } catch (e) {
+      console.error("Erro ao excluir:", e)
+      falar("Erro ao excluir o remédio.", null, true)
+    }
+  }
+}
+
 onMounted(() => {
   const q = query(collection(db, 'remedios'), orderBy('horario', 'asc'))
   unsubscribe = onSnapshot(q, (snapshot) => {
@@ -154,13 +186,6 @@ const confirmarTomado = async (remedio) => {
   const refDoc = doc(db, 'remedios', remedio.id)
   await updateDoc(refDoc, { status: 'tomado' })
   falar(`Você tomou ${remedio.nome}`, null, true)
-}
-
-const excluirRemedio = async (id, nome) => {
-  if (confirm(`Remover ${nome}?`)) {
-    await deleteDoc(doc(db, 'remedios', id))
-    falar('Remédio removido', null, true)
-  }
 }
 </script>
 
@@ -208,7 +233,7 @@ const excluirRemedio = async (id, nome) => {
              class="w-full shrink-0 rounded-[35px] p-1 shadow-[8px_8px_0px_0px_rgba(255,255,255,0.05)] transition-all"
              :style="{ backgroundColor: remedio.status === 'pendente' ? '#ffff00' : '#1a1a1a' }">
           <div class="h-full w-full bg-black rounded-[33px] border-[3px] border-black p-5 flex flex-col justify-between relative overflow-hidden">
-            <button @click="excluirRemedio(remedio.id, remedio.nome)" @mouseenter="falar(`Se deseja excluir o remédio ${remedio.nome} aperte nesse x vermelho`)" class="absolute top-4 right-5 text-[#FF0000] font-black text-xl uppercase p-1 z-20">X</button>
+            <button @click="solicitarExclusao(remedio)" @mouseenter="falar(`Se deseja excluir o remédio ${remedio.nome} aperte nesse x vermelho`)" class="absolute top-4 right-5 text-[#FF0000] font-black text-xl uppercase p-1 z-20">X</button>
 
             <div class="flex flex-col z-10" @mouseenter="falar(`Remédio ${remedio.nome} às ${remedio.horario}`, remedio.id)">
                 <span class="text-white font-[1000] text-2xl leading-none tracking-tighter">{{ remedio.horario }}</span>
@@ -269,7 +294,7 @@ const excluirRemedio = async (id, nome) => {
                class="w-full shrink-0 min-h-[320px] rounded-[50px] p-1.5 shadow-[15px_15px_0px_0px_rgba(255,255,255,0.05)] transition-all mb-4"
                :style="{ backgroundColor: remedio.status === 'pendente' ? '#ffff00' : '#1a1a1a' }">
             <div class="h-full w-full bg-black rounded-[45px] border-[4px] border-black p-8 flex flex-col justify-between relative overflow-hidden">
-              <button @click="excluirRemedio(remedio.id, remedio.nome)" @mouseenter="falar(`Se deseja excluir o remédio ${remedio.nome} aperte nesse x vermelho`)" class="absolute top-6 right-8 text-[#FF0000] hover:scale-110 font-black text-3xl uppercase p-2 z-20">X</button>
+              <button @click="solicitarExclusao(remedio)" @mouseenter="falar(`Se deseja excluir o remédio ${remedio.nome} aperte nesse x vermelho`)" class="absolute top-6 right-8 text-[#FF0000] hover:scale-110 font-black text-3xl uppercase p-2 z-20">X</button>
 
               <div class="flex flex-col z-10" @mouseenter="falar(`Remédio ${remedio.nome} às ${remedio.horario}`, remedio.id)">
                   <span class="text-white font-[1000] text-[5vw] leading-none tracking-tighter">{{ remedio.horario }}</span>
@@ -312,6 +337,35 @@ const excluirRemedio = async (id, nome) => {
           </div>
 
           <button @click="fecharAjuda" class="w-full bg-[#ffff00] text-black py-5 md:py-10 rounded-[30px] md:rounded-[40px] font-[1000] text-2xl md:text-5xl uppercase border-6 md:border-8 border-black shadow-[8px_8px_0_0_#fff] shrink-0 active:scale-95 transition-all">FECHAR AJUDA</button>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- NOVO MODAL PERSONALIZADO DE EXCLUSÃO -->
+    <Transition name="fade">
+      <div v-if="mostrarModalExclusao" class="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 md:p-8 backdrop-blur-md">
+        <div class="max-w-4xl w-full bg-[#0a0a0a] border-6 md:border-8 border-[#FF0000] rounded-[40px] md:rounded-[60px] p-6 md:p-10 flex flex-col gap-6 shadow-[0_0_100px_rgba(255,0,0,0.3)] text-center">
+          
+          <div class="flex items-center justify-center gap-4">
+            <span class="text-6xl animate-bounce">⚠️</span>
+            <h3 class="text-[#FF0000] font-[1000] text-2xl md:text-4xl uppercase italic leading-none">Confirmação de Exclusão</h3>
+          </div>
+
+          <div class="bg-zinc-900 p-6 rounded-[30px] border-2 border-zinc-800">
+            <p class="text-white font-black text-xl md:text-3xl leading-snug uppercase">
+              Você clicou no botão para excluir o remédio <span class="text-[#ffff00]">{{ remedioParaExcluir?.nome }}</span>. Deseja realmente fazer isso?
+            </p>
+          </div>
+
+          <div class="flex flex-col md:flex-row gap-4">
+            <button @click="confirmarExclusaoEfetiva" @mouseenter="falar('Sim, desejo excluir')" class="flex-1 bg-[#FF0000] text-white py-5 rounded-[30px] font-[1000] text-xl md:text-3xl uppercase border-4 border-black shadow-lg active:scale-95 transition-all">
+              SIM, EXCLUIR 🗑️
+            </button>
+            <button @click="cancelarExclusao" @mouseenter="falar('Não, voltar')" class="flex-1 bg-[#ffff00] text-black py-5 rounded-[30px] font-[1000] text-xl md:text-3xl uppercase border-4 border-black shadow-lg active:scale-95 transition-all">
+              NÃO, VOLTAR ❌
+            </button>
+          </div>
+
         </div>
       </div>
     </Transition>
